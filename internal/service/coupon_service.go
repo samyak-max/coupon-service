@@ -5,15 +5,16 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	"github.com/patrickmn/go-cache"
 	"github.com/samyak-max/coupon-service/internal/models"
 	"github.com/samyak-max/coupon-service/internal/repository"
-	"github.com/patrickmn/go-cache"
 )
 
 var (
-	ErrCouponExpired        = errors.New("coupon has expired")
-	ErrCouponNotApplicable  = errors.New("coupon not applicable to cart items")
-	ErrMinOrderValueNotMet  = errors.New("minimum order value not met")
+	ErrCouponExpired       = errors.New("coupon has expired")
+	ErrCouponNotApplicable = errors.New("coupon not applicable to cart items")
+	ErrMinOrderValueNotMet = errors.New("minimum order value not met")
 	ErrMaxUsageExceeded    = errors.New("maximum usage per user exceeded")
 	ErrInvalidTimeWindow   = errors.New("coupon not valid in current time window")
 )
@@ -103,7 +104,7 @@ func (s *couponService) ValidateCoupon(ctx context.Context, req *models.Validati
 		UsedAt:   req.Timestamp,
 	}
 
-	err = s.repo.RecordUsage(ctx, usage);
+	err = s.repo.RecordUsage(ctx, usage)
 	if err != nil {
 		return nil, err
 	}
@@ -153,13 +154,13 @@ func (s *couponService) calculateDiscount(coupon *models.Coupon, items []models.
 }
 
 func (s *couponService) isCouponApplicableToCart(coupon models.Coupon, items []models.CartItem) bool {
-	if len(coupon.ApplicableMedicines) == 0 && len(coupon.ApplicableCategories) == 0 {
+	if len(coupon.ApplicableMedicineIDs) == 0 && len(coupon.ApplicableCategories) == 0 {
 		return true
 	}
 
 	for _, item := range items {
 		// Check if item ID is in applicable medicines
-		for _, medicineID := range coupon.ApplicableMedicines {
+		for _, medicineID := range coupon.ApplicableMedicineIDs {
 			if item.ID == medicineID {
 				return true
 			}
@@ -174,4 +175,4 @@ func (s *couponService) isCouponApplicableToCart(coupon models.Coupon, items []m
 	}
 
 	return false
-} 
+}

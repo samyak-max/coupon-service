@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   app:
     build: .
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/farmako_coupons?sslmode=disable
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/coupons?sslmode=disable
     depends_on:
       - db
     restart: unless-stopped
@@ -16,7 +14,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=farmako_coupons
+      - POSTGRES_DB=coupons
     ports:
       - "5432:5432"
     volumes:

@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23 AS app-builder
 
 WORKDIR /app
 
@@ -19,11 +19,11 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# Copy the binary from builder
-COPY --from=builder /app/coupon-service .
+# Corrected stage name here
+COPY --from=app-builder /app/coupon-service .
 
 # Expose the application port
 EXPOSE 8080
 
 # Run the application
-CMD ["./coupon-service"] 
+CMD ["./coupon-service"]
