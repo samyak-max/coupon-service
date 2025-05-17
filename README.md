@@ -1,6 +1,6 @@
-# Farmako Coupon Service
+#Coupon Service
 
-A production-ready coupon management service for the Farmako medicine ordering platform. This service provides functionality for creating, validating, and managing coupons with various discount types and usage restrictions.
+A production-ready coupon management service for the medicine ordering platform. This service provides functionality for creating, validating, and managing coupons with various discount types and usage restrictions.
 
 ## Features
 
@@ -32,7 +32,7 @@ A production-ready coupon management service for the Farmako medicine ordering p
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/farmako/coupon-service.git
+git clone https://github.com/samyak-max/coupon-service.git
 cd coupon-service
 ```
 
