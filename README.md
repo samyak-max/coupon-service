@@ -135,33 +135,3 @@ docker-compose up db -d
 ```bash
 go run cmd/server/main.go
 ```
-
-### Running Tests
-
-```bash
-go test ./...
-```
-
-## Production Deployment
-
-For production deployment, consider:
-
-1. Using environment variables for configuration
-2. Setting up proper logging
-3. Implementing monitoring and alerting
-4. Setting up a CI/CD pipeline
-5. Using a production-grade PostgreSQL setup
-6. Implementing rate limiting
-7. Setting up SSL/TLS
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
