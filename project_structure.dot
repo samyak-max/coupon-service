@@ -1,0 +1,64 @@
+digraph G {
+    // Graph styling
+    graph [rankdir=TB, splines=ortho, nodesep=0.8, ranksep=0.5];
+    node [shape=box, style=filled, fillcolor=lightblue, fontname="Arial", margin="0.3,0.1"];
+    edge [fontname="Arial", fontsize=10];
+
+    // Main project structure
+    subgraph cluster_project {
+        label="Coupon Service Project";
+        style=filled;
+        color=lightgrey;
+        node [style=filled, fillcolor=white];
+
+        // Root level
+        root [label="Root", shape=folder];
+        cmd [label="cmd/", shape=folder];
+        internal [label="internal/", shape=folder];
+
+        // Internal structure
+        subgraph cluster_internal {
+            label="internal/";
+            style=filled;
+            color=lightgrey;
+            node [style=filled, fillcolor=white];
+
+            service [label="service/", shape=folder];
+            models [label="models/", shape=folder];
+            handler [label="handler/", shape=folder];
+            repository [label="repository/", shape=folder];
+        }
+
+        // Service components
+        subgraph cluster_service {
+            label="service/";
+            style=filled;
+            color=lightgrey;
+            node [style=filled, fillcolor=white];
+
+            coupon_service [label="coupon_service.go"];
+        }
+
+        // Relationships
+        root -> {cmd internal};
+        internal -> {service models handler repository};
+        service -> coupon_service;
+
+        // Dependencies
+        coupon_service -> models [label="depends on"];
+        coupon_service -> repository [label="has a"];
+        handler -> service [label="has a"];
+        service -> repository [label="has a"];
+    }
+
+    // Styling for different types of nodes
+    node [shape=box, style=filled];
+    root [fillcolor=lightgreen];
+    cmd [fillcolor=lightyellow];
+    internal [fillcolor=lightyellow];
+    service [fillcolor=lightyellow];
+    models [fillcolor=lightyellow];
+    handler [fillcolor=lightyellow];
+    repository [fillcolor=lightyellow];
+    coupon_service [fillcolor=lightblue];
+} 

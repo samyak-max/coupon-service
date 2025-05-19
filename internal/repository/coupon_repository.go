@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"time"
+
 	"github.com/samyak-max/coupon-service/internal/models"
 	"gorm.io/gorm"
 )
@@ -50,4 +51,4 @@ func (r *couponRepository) GetUserUsageCount(ctx context.Context, couponID uint,
 	var count int64
 	err := r.db.WithContext(ctx).Model(&models.CouponUsage{}).Where("coupon_id = ? AND user_id = ?", couponID, userID).Count(&count).Error
 	return int(count), err
-} 
+}

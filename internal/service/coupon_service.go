@@ -2,7 +2,12 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -46,12 +51,19 @@ func (s *couponService) ValidateCoupon(ctx context.Context, req *models.Validati
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	coupon, err := s.repo.GetByCode(ctx, req.CouponCode)
-	if err != nil {
-		return &models.ValidationResponse{
-			IsValid: false,
-			Reason:  "coupon not found",
-		}, nil
+	// Cache the coupon
+	var coupon *models.Coupon
+	if cachedCoupon, found := s.cache.Get(req.CouponCode); found {
+		coupon = cachedCoupon.(*models.Coupon)
+	} else {
+		coupon, err := s.repo.GetByCode(ctx, req.CouponCode)
+		if err != nil {
+			return &models.ValidationResponse{
+				IsValid: false,
+				Reason:  "coupon not found",
+			}, nil
+		}
+		s.cache.Set(req.CouponCode, coupon, cache.DefaultExpiration)
 	}
 
 	// Check expiration
@@ -94,6 +106,14 @@ func (s *couponService) ValidateCoupon(ctx context.Context, req *models.Validati
 		}
 	}
 
+	// Check if coupon is applicable to cart items
+	if !s.isCouponApplicableToCart(*coupon, req.CartItems) {
+		return &models.ValidationResponse{
+			IsValid: false,
+			Reason:  ErrCouponNotApplicable.Error(),
+		}, nil
+	}
+
 	// Calculate discount
 	discount := s.calculateDiscount(coupon, req.CartItems, req.OrderTotal)
 
@@ -104,7 +124,7 @@ func (s *couponService) ValidateCoupon(ctx context.Context, req *models.Validati
 		UsedAt:   req.Timestamp,
 	}
 
-	err = s.repo.RecordUsage(ctx, usage)
+	err := s.repo.RecordUsage(ctx, usage)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +136,32 @@ func (s *couponService) ValidateCoupon(ctx context.Context, req *models.Validati
 	}, nil
 }
 
+func hashCartSignature(sig string) string {
+	sum := sha256.Sum256([]byte(sig))
+	return hex.EncodeToString(sum[:])
+}
+
+func cartSignature(cartItems []models.CartItem) string {
+	var sb strings.Builder
+	sort.Slice(cartItems, func(i, j int) bool {
+		return cartItems[i].ID < cartItems[j].ID
+	})
+	for _, item := range cartItems {
+		sb.WriteString(fmt.Sprintf("%s|", item.ID))
+	}
+	return sb.String()
+}
+
 func (s *couponService) GetApplicableCoupons(ctx context.Context, cartItems []models.CartItem, orderTotal float64, timestamp time.Time) ([]models.Coupon, error) {
+	// Create a cache key based on the parameters
+	cartSig := cartSignature(cartItems)
+	cacheKey := fmt.Sprintf("applicable_%s_%.2f_%d", hashCartSignature(cartSig), orderTotal, timestamp.Unix())
+
+	// Try to get from cache first
+	if cachedCoupons, found := s.cache.Get(cacheKey); found {
+		return cachedCoupons.([]models.Coupon), nil
+	}
+
 	coupons, err := s.repo.GetApplicableCoupons(ctx, orderTotal, timestamp)
 	if err != nil {
 		return nil, err
@@ -130,6 +175,7 @@ func (s *couponService) GetApplicableCoupons(ctx context.Context, cartItems []mo
 		}
 	}
 
+	s.cache.Set(cacheKey, applicableCoupons, cache.DefaultExpiration)
 	return applicableCoupons, nil
 }
 
@@ -141,9 +187,6 @@ func (s *couponService) calculateDiscount(coupon *models.Coupon, items []models.
 	} else {
 		itemsDiscount = coupon.DiscountValue
 	}
-
-	// Apply any additional discounts on charges (delivery fees, etc.)
-	// This can be extended based on specific business rules
 
 	totalDiscount := itemsDiscount + chargesDiscount
 	return &models.Discount{
