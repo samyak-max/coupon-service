@@ -117,6 +117,9 @@ Example request:
 }
 ```
 
+## Service Workflow
+![Coupon service UML](https://github.com/user-attachments/assets/3b39f066-9317-4921-8713-75798f313a5c)
+
 ## Development
 
 ### Local Setup
